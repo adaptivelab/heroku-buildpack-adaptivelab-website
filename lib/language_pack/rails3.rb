@@ -63,6 +63,24 @@ private
           end
         end
       end
+
+      if rake_task_defined?("adaptive:all")
+        topic("Building Adaptive Lab assets")
+        ENV["RAILS_GROUPS"] ||= "assets"
+        ENV["RAILS_ENV"]    ||= "production"
+
+        puts "Running: rake adaptive:all"
+        require 'benchmark'
+        time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake adaptive:all 2>&1") }
+
+        if $?.success?
+          log "adaptivelab_compile", :status => "success"
+          puts "Adaptive Lab compilation completed (#{"%.2f" % time}s)"
+        else
+          log "adaptivelab_compile", :status => "failure"
+          puts "Adaptive Lab compilation failed"
+        end
+      end
     end
   end
 
