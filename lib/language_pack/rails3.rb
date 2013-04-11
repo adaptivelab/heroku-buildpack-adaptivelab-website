@@ -39,31 +39,6 @@ private
     log("assets_precompile") do
       setup_database_url_env
 
-      if rake_task_defined?("assets:precompile")
-        topic("Preparing app for Rails asset pipeline")
-        if File.exists?("public/assets/manifest.yml")
-          puts "Detected manifest.yml, assuming assets were compiled locally"
-        else
-          ENV["RAILS_GROUPS"] ||= "assets"
-          ENV["RAILS_ENV"]    ||= "production"
-
-          puts "Running: rake assets:precompile"
-          require 'benchmark'
-          time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake assets:precompile 2>&1") }
-
-          if $?.success?
-            log "assets_precompile", :status => "success"
-            puts "Asset precompilation completed (#{"%.2f" % time}s)"
-          else
-            log "assets_precompile", :status => "failure"
-            puts "Precompiling assets failed, enabling runtime asset compilation"
-            install_plugin("rails31_enable_runtime_asset_compilation")
-            puts "Please see this article for troubleshooting help:"
-            puts "http://devcenter.heroku.com/articles/rails31_heroku_cedar#troubleshooting"
-          end
-        end
-      end
-
       if rake_task_defined?("adaptive:all")
         topic("Building Adaptive Lab assets")
         ENV["RAILS_GROUPS"] ||= "assets"
