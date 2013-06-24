@@ -17,6 +17,7 @@
   ],
   "rails3": [
     "sharpstone/rails3_mri_193",
-    "sharpstone/railties3_mri_193"
+    "sharpstone/railties3_mri_193",
+    "adaptivelab/adaptivelab-website"
   ]
 }
