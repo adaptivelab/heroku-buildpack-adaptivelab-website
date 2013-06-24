@@ -79,6 +79,8 @@ class LanguagePack::Ruby < LanguagePack::Base
       create_database_yml
       install_binaries
       run_assets_precompile_rake_task
+      build_jekyll_layout
+      generate_jekyll_site
     end
   end
 
@@ -585,13 +587,24 @@ params = CGI.parse(uri.query || "")
   end
 
   def run_assets_precompile_rake_task
-    if rake_task_defined?("assets:precompile")
-      require 'benchmark'
+    log("assets_precompile") do
 
-      topic "Running: rake assets:precompile"
-      time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake assets:precompile 2>&1") }
-      if $?.success?
-        puts "Asset precompilation completed (#{"%.2f" % time}s)"
+      if rake_task_defined?("adaptive:all")
+        topic("Building Adaptive Lab assets")
+        ENV["RAILS_GROUPS"] ||= "assets"
+        ENV["RAILS_ENV"]    ||= "production"
+
+        puts "Running: rake adaptive:all"
+        require 'benchmark'
+        time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake adaptive:all 2>&1") }
+
+        if $?.success?
+          log "adaptivelab_compile", :status => "success"
+          puts "Adaptive Lab compilation completed (#{"%.2f" % time}s)"
+        else
+          log "adaptivelab_compile", :status => "failure"
+          puts "Adaptive Lab compilation failed"
+        end
       end
     end
   end
@@ -650,5 +663,37 @@ params = CGI.parse(uri.query || "")
     cache_clear bundler_cache
     # need to reinstall language pack gems
     install_language_pack_gems
+  end
+
+  # detects if this is a valid Jekyll site by seeing if "_config.yml" exists
+  # @return [Boolean] true if it's a Jekyll app
+  def use_jekyll?
+    File.exist?("jekyll/_config.yml")
+  end
+
+  def build_jekyll_layout
+    if use_jekyll?
+      if rake_task_defined?("jekyll:build_layout")
+        topic "Running: rake jekyll:build_layout"
+        run("env PATH=$PATH:bin bundle exec rake jekyll:build_layout")
+      end
+    end
+  end
+
+  def generate_jekyll_site
+    if use_jekyll?
+      require 'benchmark'
+
+      topic "Running: jekyll"
+      time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec jekyll build --source jekyll --destination app/assets/jekyll 2>&1") }
+
+      if $?.success?
+        log "jekyll_build", :status => "success"
+        puts "Jekyll build completed (#{"%.2f" % time}s)"
+      else
+        log "jekyll_build", :status => "failure"
+        puts "Jekyll build failed"
+      end
+    end
   end
 end
