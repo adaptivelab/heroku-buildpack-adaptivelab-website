@@ -6,4 +6,5 @@ group :development do
   gem "rspec-expectations"
   gem "excon"
   gem "rake"
+  gem "heroku"
 end
