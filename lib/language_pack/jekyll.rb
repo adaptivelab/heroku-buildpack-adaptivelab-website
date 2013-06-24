@@ -36,8 +36,13 @@ class LanguagePack::Jekyll < LanguagePack::Rack
 
     topic "Running: jekyll"
     time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec jekyll 2>&1") }
+
     if $?.success?
+      log "jekyll_build", :status => "success"
       puts "Jekyll build completed (#{"%.2f" % time}s)"
+    else
+      log "jekyll_build", :status => "failure"
+      puts "Jekyll build failed"
     end
   end
 end
