@@ -56,6 +56,30 @@ private
           puts "Adaptive Lab compilation failed"
         end
       end
+
+      if rake_task_defined?("assets:precompile")
+        topic("Preparing app for Rails asset pipeline")
+        if File.exists?("public/assets/manifest.yml")
+          puts "Detected manifest.yml, assuming assets were compiled locally"
+        else
+          ENV["RAILS_GROUPS"] ||= "assets"
+          ENV["RAILS_ENV"]    ||= "production"
+
+          puts "Running: rake assets:precompile"
+          require 'benchmark'
+          time = Benchmark.realtime { pipe("env PATH=$PATH:bin bundle exec rake assets:precompile 2>&1") }
+
+          if $?.success?
+            log "assets_precompile", :status => "success"
+            puts "Asset precompilation completed (#{"%.2f" % time}s)"
+          else
+            log "assets_precompile", :status => "failure"
+            error "Precompiling assets failed."
+          end
+        end
+      else
+        puts "Error detecting the assets:precompile task"
+      end
     end
   end
 
